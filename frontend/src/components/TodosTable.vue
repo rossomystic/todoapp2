@@ -8,10 +8,12 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table'
+import EditTodoView from '@/components/EditTodoView.vue'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Trash2Icon } from 'lucide-vue-next'
+import { Trash2Icon, PencilIcon } from 'lucide-vue-next'
 import type { ToDo } from '@/models/todo'
+import { ref } from 'vue'
 
 type Props = {
   list: ToDo[]
@@ -23,6 +25,14 @@ type Emits = {
 
 const props = defineProps<Props>()
 const emits = defineEmits<Emits>()
+
+const editToDoOpen = ref<boolean>(false)
+const editToDo = ref<ToDo>()
+
+function onEditClick(item: ToDo) {
+  editToDoOpen.value = true
+  editToDo.value = item
+}
 
 async function toggleComplete(id: number, value: boolean) {
   await fetch(`http://localhost:6969/todos/${id}`, {
@@ -37,12 +47,14 @@ async function toggleComplete(id: number, value: boolean) {
   emits('list:changed')
 }
 
+function onEditSave() {
+  editToDoOpen.value = false
+  emits('list:changed')
+}
+
 async function deleteItem(id: number) {
   await fetch(`http://localhost:6969/todos/${id}`, {
-    method: 'DELETE',
-    headers: {
-      'Content-Type': 'application/json'
-    }
+    method: 'DELETE'
   })
   emits('list:changed')
 }
@@ -53,10 +65,10 @@ async function deleteItem(id: number) {
     <TableCaption> List of things to do </TableCaption>
     <TableHeader>
       <TableRow>
-        <TableHead> </TableHead>
-        <TableHead> Title </TableHead>
-        <TableHead> Descrpition </TableHead>
-        <TableHead> </TableHead>
+        <TableHead class="w-1/12"> </TableHead>
+        <TableHead class="w-4/12"> Title </TableHead>
+        <TableHead class="w-5/12"> Descrpition </TableHead>
+        <TableHead class="w-2/12"> </TableHead>
       </TableRow>
     </TableHeader>
     <TableBody>
@@ -66,12 +78,24 @@ async function deleteItem(id: number) {
         </TableCell>
         <TableCell> {{ item.title }} </TableCell>
         <TableCell> {{ item.description }} </TableCell>
-        <TableCell class="transition-opacity duration-500 opacity-0 group-hover:opacity-100">
+        <TableCell
+          class="transition-opacity duration-500 opacity-0 group-hover:opacity-100 text-end"
+        >
           <Button variant="ghost" size="icon" @click="deleteItem(item.id)">
             <Trash2Icon class="text-red-500" />
+          </Button>
+          <Button variant="ghost" size="icon" @click="onEditClick(item)">
+            <PencilIcon />
           </Button>
         </TableCell>
       </TableRow>
     </TableBody>
   </Table>
+  <EditTodoView
+    v-if="editToDo"
+    :open="editToDoOpen"
+    :todo="editToDo"
+    @update:open="(v) => (editToDoOpen = v)"
+    @saved="onEditSave"
+  />
 </template>
