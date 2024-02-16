@@ -36,6 +36,16 @@ async function toggleComplete(id: number, value: boolean) {
   })
   emits('list:changed')
 }
+
+async function deleteItem(id: number) {
+  await fetch(`http://localhost:6969/todos/${id}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+  emits('list:changed')
+}
 </script>
 
 <template>
@@ -57,7 +67,7 @@ async function toggleComplete(id: number, value: boolean) {
         <TableCell> {{ item.title }} </TableCell>
         <TableCell> {{ item.description }} </TableCell>
         <TableCell class="transition-opacity duration-500 opacity-0 group-hover:opacity-100">
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" @click="deleteItem(item.id)">
             <Trash2Icon class="text-red-500" />
           </Button>
         </TableCell>
