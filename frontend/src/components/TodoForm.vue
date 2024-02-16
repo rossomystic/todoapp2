@@ -28,6 +28,7 @@ type Props = {
 
 type Emits = {
   (e: 'update:open', value: boolean): void
+  (e: 'saved'): void
 }
 
 const props = defineProps<Props>()
@@ -42,7 +43,6 @@ type Todo = z.infer<typeof TODO_SCHEMA>
 const schema = toTypedSchema(TODO_SCHEMA)
 
 async function onSubmit(values: any) {
-  console.log(values)
   const body = {
     ...values,
     completed: false
@@ -54,14 +54,18 @@ async function onSubmit(values: any) {
       'Content-type': 'application/json'
     }
   })
-  window.location.reload()
+  emits('saved')
 }
 </script>
 
 <template>
-  <Form class="flex flex-col items-start gap-8 my-3" @submit="onSubmit" :validation-schema="schema">
-    <Dialog :open="open" @update:open="(v) => emits('update:open', v)">
-      <DialogContent>
+  <Dialog :open="open" @update:open="(v) => emits('update:open', v)">
+    <DialogContent>
+      <Form
+        class="flex flex-col items-start gap-8 my-3"
+        @submit="onSubmit"
+        :validation-schema="schema"
+      >
         <DialogHeader>
           <DialogTitle>New To Do</DialogTitle>
           <DialogDescription> Create a new To Do item </DialogDescription>
@@ -90,7 +94,7 @@ async function onSubmit(values: any) {
           <Button @click="emits('update:open', false)" variant="ghost" type="button">Cancel</Button>
           <Button type="submit">Save</Button>
         </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  </Form>
+      </Form>
+    </DialogContent>
+  </Dialog>
 </template>

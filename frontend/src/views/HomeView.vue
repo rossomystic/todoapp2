@@ -2,14 +2,9 @@
 import { ref } from 'vue'
 import TodoForm from '@/components/TodoForm.vue'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogTrigger, DialogContent } from '@/components/ui/dialog'
+import TodosTable from '@/components/TodosTable.vue'
+import type { ToDo } from '@/models/todo.ts'
 
-interface ToDo {
-  id: number
-  title: string
-  description: string
-  completed: boolean
-}
 const list = ref<ToDo[]>([])
 const isOpen = ref(false)
 
@@ -19,15 +14,18 @@ async function fetchList() {
   list.value = json
 }
 fetchList()
+
+function onSaved() {
+  isOpen.value = false
+  fetchList()
+}
 </script>
 
 <template>
-  <main class="container mt-4">
+  <main main class="container mt-4">
     <Button @click="isOpen = true">Create new ToDo</Button>
-    <TodoForm :open="isOpen" @update:open="(v) => (isOpen = v)" />
+    <TodoForm :open="isOpen" @update:open="(v) => (isOpen = v)" @saved="onSaved" />
 
-    <li v-for="item in list" :key="item.id">
-      {{ item.title }}
-    </li>
+    <TodosTable :list="list" @list:changed="fetchList" />
   </main>
 </template>
