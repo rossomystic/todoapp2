@@ -14,6 +14,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Trash2Icon, PencilIcon } from 'lucide-vue-next'
 import type { ToDo } from '@/models/todo'
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 type Props = {
   list: ToDo[]
@@ -58,6 +59,8 @@ async function deleteItem(id: number) {
   })
   emits('list:changed')
 }
+
+const { push } = useRouter()
 </script>
 
 <template>
@@ -74,17 +77,22 @@ async function deleteItem(id: number) {
     <TableBody>
       <TableRow v-for="item in list" class="group" :key="`todo-${item.id}`">
         <TableCell>
-          <Checkbox @click="toggleComplete(item.id, !item.completed)" :checked="item.completed" />
+          <Checkbox
+            @click.stop="toggleComplete(item.id, !item.completed)"
+            :checked="item.completed"
+          />
         </TableCell>
-        <TableCell> {{ item.title }} </TableCell>
+        <TableCell class="cursor-pointer" @click="push(`/todos/${item.id}`)">
+          {{ item.title }}
+        </TableCell>
         <TableCell> {{ item.description }} </TableCell>
         <TableCell
           class="transition-opacity duration-500 opacity-0 group-hover:opacity-100 text-end"
         >
-          <Button variant="ghost" size="icon" @click="deleteItem(item.id)">
+          <Button variant="ghost" size="icon" @click.stop="deleteItem(item.id)">
             <Trash2Icon class="text-red-500" />
           </Button>
-          <Button variant="ghost" size="icon" @click="onEditClick(item)">
+          <Button variant="ghost" size="icon" @click.stop="onEditClick(item)">
             <PencilIcon />
           </Button>
         </TableCell>
