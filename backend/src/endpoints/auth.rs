@@ -4,8 +4,10 @@ use axum::{
     response::IntoResponse,
     routing, Router,
 };
-use chrono::NaiveDateTime;
+use chrono::{Days, Local, NaiveDateTime, TimeDelta, Utc};
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha512};
+use tracing_subscriber::fmt::format;
 
 use crate::{ApiResponse, AppState};
 
@@ -29,7 +31,7 @@ pub struct NewUser {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct SignUp {
+pub struct SignIn {
     username: String,
     password: String,
 }
@@ -46,6 +48,7 @@ pub async fn find_one(
     username: &str,
     password: &str,
   ) -> anyhow::Result<Option<User>> {
+    let password = hash_password(password);
     let result = sqlx::query_as!(
         User,
         r#"SELECT 
@@ -79,7 +82,17 @@ pub async fn find_one(
         Ok(Json(result).into_response())
   }
 
-async fn signin(State(state): State<AppState>, Json(data):Json<NewUser>) -> ApiResponse {
+  fn hash_password (password: &str) -> String{
+    let mut hasher = Sha512::new();
+    hasher.update(password);
+
+    let password = hasher.finalize();
+    format!("{:x}", password)
+  }
+
+async fn signup(State(state): State<AppState>, Json(data):Json<NewUser>) -> ApiResponse {
+    let password= hash_password(&data.password);
+
     let result = sqlx::query_as!(
         User,
         r#"INSERT INTO users (username, password, email, name, surname) VALUES($1, $2, $3, $4, $5) RETURNING
@@ -91,7 +104,7 @@ async fn signin(State(state): State<AppState>, Json(data):Json<NewUser>) -> ApiR
         created_at
         "#, 
         data.username, 
-        data.password, 
+        password, 
         data.email,
         data.name,
         data.surname)
@@ -99,12 +112,37 @@ async fn signin(State(state): State<AppState>, Json(data):Json<NewUser>) -> ApiR
         .await?;
     Ok(Json(result).into_response())
 }
-async fn signup(State(state): State<AppState>, Json(data): Json<SignUp>) -> ApiResponse {
+async fn signin(State(state): State<AppState>, Json(data): Json<SignIn>) -> ApiResponse {
     let user = find_one(&state, &data.username, &data.password).await?;
     if user.is_none() {
         return Ok(StatusCode::UNAUTHORIZED.into_response());
     }
-    let token = "".to_string();
+    let user = user.unwrap();
+    let mut hasher = Sha512::new();
+    hasher.update(user.username);
+    hasher.update(user.name);
+    hasher.update(user.id.to_ne_bytes());
+    hasher.update(user.surname);
+    hasher.update(user.email);
+
+    let now = Local::now().to_string();
+    println!("{}",now);
+    hasher.update(now); 
+
+    let token= hasher.finalize();
+    let token= format!("{:x}",token);
+
+    let expires_at = Utc::now() + TimeDelta::try_days(1).unwrap();
+
+    let result = sqlx::query!(
+        r#"INSERT INTO sessions (user_id, token, expires_at) VALUES($1, $2, $3)"#, 
+        user.id,
+        token,
+        expires_at
+        )
+        .execute(&state.db)
+        .await?;
+    
     Ok(token.into_response())
 }
 
