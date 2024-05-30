@@ -70,8 +70,11 @@ async fn main() {
     // build our application with a route
     let app = Router::<AppState>::new()
         .merge(endpoints::todos::router())
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            middlewares::auth::auth,
+        ))
         .merge(endpoints::auth::router())
-        .layer(axum::middleware::from_fn(middlewares::auth::auth))
         .layer(TraceLayer::new_for_http())
         .layer(CorsLayer::permissive())
         .with_state(state);
