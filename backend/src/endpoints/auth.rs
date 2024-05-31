@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha512};
 use tracing_subscriber::fmt::format;
 
-use crate::{ApiResponse, AppState};
+use crate::{middlewares, ApiResponse, AppState};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct User {
@@ -36,10 +36,14 @@ pub struct SignIn {
     password: String,
 }
 
-pub fn router() -> Router<AppState> {
+pub fn router(state: &AppState) -> Router<AppState> {
     Router::new()
-        .route("/auth/signin", routing::post(signin))
-        .route("/auth/userinfo", routing::get(userinfo))
+    .route("/auth/userinfo", routing::get(userinfo))
+    .layer(axum::middleware::from_fn_with_state(
+        state.clone(),
+        middlewares::auth::auth,
+    ))
+    .route("/auth/signin", routing::post(signin))
         .route("/auth/signup", routing::post(signup))
 }
 
@@ -142,7 +146,7 @@ async fn signin(State(state): State<AppState>, Json(data): Json<SignIn>) -> ApiR
         )
         .execute(&state.db)
         .await?;
-    
+    println!("logged in");
     Ok(token.into_response())
 }
 

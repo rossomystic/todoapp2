@@ -74,7 +74,7 @@ async fn main() {
             state.clone(),
             middlewares::auth::auth,
         ))
-        .merge(endpoints::auth::router())
+        .merge(endpoints::auth::router(&state))
         .layer(TraceLayer::new_for_http())
         .layer(CorsLayer::permissive())
         .with_state(state);

@@ -9,7 +9,13 @@ const list = ref<ToDo[]>([])
 const isOpen = ref(false)
 
 async function fetchList() {
-  const response = await fetch('http://localhost:6969/todos', { method: 'GET' })
+  const token = localStorage.getItem('TOKEN')
+  const response = await fetch('http://localhost:6969/todos', {
+    method: 'GET',
+    headers: {
+      Authorization: 'Bearer ' + token
+    }
+  })
   const json = await response.json()
   list.value = json
 }

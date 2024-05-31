@@ -1,42 +1,36 @@
 <script lang="ts">
-import z from 'zod'
+import z, { type TypeOf } from 'zod'
 import { toTypedSchema } from '@vee-validate/zod'
 import { Form } from '@/components/ui/form'
 import { Button } from '@/components/ui/button'
 
 const LOGIN_SCHEMA = z.object({
   username: z.string().min(3).max(100),
-  password: z.string().min(8).max(100)
+  password: z.string().max(100)
 })
+
+type LoginSchema = z.infer<typeof LOGIN_SCHEMA>
 </script>
 
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
 import { Input } from '@/components/ui/input'
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form'
 
 const schema = toTypedSchema(LOGIN_SCHEMA)
+const router = useRouter()
 
-type Emits = {
-  (e: 'update:open', value: boolean): void
-  (e: 'saved'): void
-}
-
-const emits = defineEmits<Emits>()
-
-async function onSubmit(values: any) {
-  const body = {
-    ...values,
-    completed: false
-  }
-
-  await fetch('http://localhost:6969/auth', {
+async function onSubmit(values: LoginSchema) {
+  const response = await fetch('http://localhost:6969/auth/signin', {
     method: 'POST',
-    body: JSON.stringify(body),
+    body: JSON.stringify(values),
     headers: {
       'Content-type': 'application/json'
     }
   })
-  emits('saved')
+  const token = await response.text()
+  localStorage.setItem('TOKEN', token)
+  router.replace({ name: 'todos' })
 }
 </script>
 

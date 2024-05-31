@@ -18,7 +18,7 @@ pub struct UserSession {
 pub async fn auth(State(state): State<AppState>, request: Request, next: Next) -> ApiResponse {
     println!("Auth middleware - PRE RESPONSE");
 
-    /*     let bearer = get_auth_bearer(&request);
+    let bearer = get_auth_bearer(&request);
     if bearer.is_none() {
         println!("Auth middleware - NO BEARER");
         return Ok(StatusCode::UNAUTHORIZED.into_response());
@@ -28,7 +28,7 @@ pub async fn auth(State(state): State<AppState>, request: Request, next: Next) -
     if user.is_none() {
         println!("Auth middleware - BEARER TOKEN NOT VALID");
         return Ok(StatusCode::UNAUTHORIZED.into_response());
-    } */
+    }
 
     let response = next.run(request).await;
     println!("Auth middleware - POST RESPONSE");
