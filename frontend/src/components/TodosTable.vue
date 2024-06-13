@@ -76,7 +76,7 @@ const { push } = useRouter()
       <TableRow>
         <TableHead class="w-1/12"> </TableHead>
         <TableHead class="w-4/12"> Title </TableHead>
-        <TableHead class="w-5/12"> Descrpition </TableHead>
+        <TableHead class="w-5/12"> Description </TableHead>
         <TableHead class="w-2/12"> </TableHead>
       </TableRow>
     </TableHeader>

@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import TodoView from '../views/TodoView.vue'
 import AuthView from '../views/AuthView.vue'
+import SignUpView from '../views/SignUpView.vue'
 import { any } from 'zod'
 
 const router = createRouter({
@@ -12,6 +13,11 @@ const router = createRouter({
       path: '/auth',
       name: 'auth',
       component: AuthView
+    },
+    {
+      path: '/signup',
+      name: 'signup',
+      component: SignUpView
     },
     {
       path: '/todos',
@@ -32,7 +38,8 @@ router.beforeEach(async (to, from, next) => {
       method: 'GET'
     });
 
-    if (!response.ok && to.name !== 'auth'&& from.name !=='auth') {
+    if (!response.ok&& to.name !== 'signup' && to.name !== 'auth'&& from.name !=='auth') {
+      console.log(response.status);
       console.log("Response status is not OK, redirecting to /auth");
       return next({ path: '/auth' });
     }
@@ -42,7 +49,7 @@ router.beforeEach(async (to, from, next) => {
     return next({ path: '/auth' });
   }
 
-  if (!localStorage.getItem('TOKEN') && to.name !== 'auth') {
+  if (!localStorage.getItem('TOKEN') && to.name !== 'auth'&& to.name !== 'signup') {
     console.log("No token found, redirecting to /auth");
     return next({ path: '/auth' });
   }
