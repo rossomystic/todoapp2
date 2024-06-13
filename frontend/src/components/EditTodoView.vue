@@ -32,12 +32,14 @@ const emits = defineEmits<Emits>()
 const schema = toTypedSchema(TODO_SCHEMA)
 
 async function onSubmit(values: any) {
+  const token = localStorage.getItem('TOKEN')
   const id = props.todo.id
   await fetch(`http://localhost:6969/todos/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(values),
     headers: {
-      'Content-type': 'application/json'
+      'Content-type': 'application/json',
+      Authorization: 'Bearer ' + token
     }
   })
   emits('saved')

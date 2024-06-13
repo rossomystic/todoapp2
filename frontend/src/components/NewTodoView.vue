@@ -33,11 +33,13 @@ async function onSubmit(values: any) {
     ...values,
     completed: false
   }
+  const token = localStorage.getItem('TOKEN')
   await fetch('http://localhost:6969/todos', {
     method: 'POST',
     body: JSON.stringify(body),
     headers: {
-      'Content-type': 'application/json'
+      'Content-type': 'application/json',
+      Authorization: 'Bearer ' + token
     }
   })
   emits('saved')

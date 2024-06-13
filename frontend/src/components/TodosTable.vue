@@ -36,13 +36,15 @@ function onEditClick(item: ToDo) {
 }
 
 async function toggleComplete(id: number, value: boolean) {
+  const token = localStorage.getItem('TOKEN')
   await fetch(`http://localhost:6969/todos/${id}`, {
     method: 'PATCH',
     body: JSON.stringify({
       completed: value
     }),
     headers: {
-      'Content-Type': 'application/json'
+      'Content-type': 'application/json',
+      Authorization: 'Bearer ' + token
     }
   })
   emits('list:changed')
@@ -54,8 +56,12 @@ function onEditSave() {
 }
 
 async function deleteItem(id: number) {
+  const token = localStorage.getItem('TOKEN')
   await fetch(`http://localhost:6969/todos/${id}`, {
-    method: 'DELETE'
+    method: 'DELETE',
+    headers: {
+      Authorization: 'Bearer ' + token
+    }
   })
   emits('list:changed')
 }

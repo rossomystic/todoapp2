@@ -18,7 +18,13 @@ const id = params.id as string
 
 const todo = ref<ToDo>()
 async function fetchItem() {
-  const response = await fetch(`http://localhost:6969/todos/${id}`, { method: 'GET' })
+  const token = localStorage.getItem('TOKEN')
+  const response = await fetch(`http://localhost:6969/todos/${id}`, {
+    method: 'GET',
+    headers: {
+      Authorization: 'Bearer ' + token
+    }
+  })
   const json = await response.json()
   todo.value = json
 }
@@ -26,12 +32,14 @@ async function fetchItem() {
 fetchItem()
 
 async function toggleComplete(id: number, value: boolean) {
+  const token = localStorage.getItem('TOKEN')
   await fetch(`http://localhost:6969/todos/${id}`, {
     method: 'PATCH',
     body: JSON.stringify({
       completed: value
     }),
     headers: {
+      Authorization: 'Bearer ' + token,
       'Content-Type': 'application/json'
     }
   })
@@ -40,8 +48,12 @@ async function toggleComplete(id: number, value: boolean) {
 const { replace } = useRouter()
 
 async function deleteItem(id: number) {
+  const token = localStorage.getItem('TOKEN')
   await fetch(`http://localhost:6969/todos/${id}`, {
-    method: 'DELETE'
+    method: 'DELETE',
+    headers: {
+      Authorization: 'Bearer ' + token
+    }
   })
   emits('list:changed')
   replace(`/todos`)
