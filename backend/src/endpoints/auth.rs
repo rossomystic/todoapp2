@@ -146,6 +146,7 @@ async fn signin(State(state): State<AppState>, Json(data): Json<SignIn>) -> ApiR
         )
         .execute(&state.db)
         .await?;
+    println!("{}",token);
     println!("logged in");
     Ok(token.into_response())
 }

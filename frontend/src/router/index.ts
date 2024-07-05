@@ -8,7 +8,7 @@ import { any } from 'zod'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    
+
     {
       path: '/auth',
       name: 'auth',
@@ -37,8 +37,10 @@ router.beforeEach(async (to, from, next) => {
     const response = await fetch('http://localhost:6969/auth/userinfo', {
       method: 'GET'
     });
-
-    if (!response.ok&& to.name !== 'signup' && to.name !== 'auth'&& from.name !=='auth') {
+    if (to.name == 'todo' && from.name == 'todos') {
+      console.log("fufina")
+    }
+    else if (!response.ok && to.name !== 'signup' && to.name !== 'auth' && from.name !== 'auth') {
       console.log(response.status);
       console.log("Response status is not OK, redirecting to /auth");
       return next({ path: '/auth' });
@@ -49,7 +51,8 @@ router.beforeEach(async (to, from, next) => {
     return next({ path: '/auth' });
   }
 
-  if (!localStorage.getItem('TOKEN') && to.name !== 'auth'&& to.name !== 'signup') {
+
+  if (!localStorage.getItem('TOKEN') && to.name !== 'auth' && to.name !== 'signup') {
     console.log("No token found, redirecting to /auth");
     return next({ path: '/auth' });
   }

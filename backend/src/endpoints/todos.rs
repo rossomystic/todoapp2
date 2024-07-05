@@ -1,14 +1,13 @@
-use std::fs::read_to_string;
-
 use axum::{
     extract::{Json, Path, State},
     http::StatusCode,
     response::IntoResponse,
-    routing, Router,
+    routing, Extension, Router,
 };
+use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 
-use crate::{ApiResponse, AppState};
+use crate::{middlewares::auth::UserSession, ApiResponse, AppState};
 
 const URL: &str = "/todos";
 const URL_ID: &str = "/todos/:id";
@@ -16,6 +15,7 @@ const URL_ID: &str = "/todos/:id";
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ToDo {
     id: i64,
+    user_id: i64,
     title: String,
     description: String,
     completed: bool,
@@ -33,6 +33,16 @@ pub struct EditToDo {
     title: Option<String>,
     description: Option<String>,
     completed: Option<bool>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct User {
+    id: i64,
+    username: String,
+    email: String,
+    name: String,
+    surname: String,
+    created_at: NaiveDateTime,
 }
 
 pub fn router() -> Router<AppState> {
@@ -53,7 +63,7 @@ pub async fn find_one(state: &AppState, id: i64) -> anyhow::Result<Option<ToDo>>
     Ok(result)
 }
 
-pub fn read_file() -> anyhow::Result<Vec<ToDo>> {
+/* pub fn read_file() -> anyhow::Result<Vec<ToDo>> {
     let file_contents = read_to_string("todos.json")?;
     let list = serde_json::from_str::<Vec<ToDo>>(&file_contents)?;
     Ok(list)
@@ -63,22 +73,31 @@ pub fn write_file(list: Vec<ToDo>) -> anyhow::Result<()> {
     let file_contents = serde_json::to_string(&list)?;
     std::fs::write("todos.json", file_contents)?;
     Ok(())
-}
+} */
 
-async fn get_all(State(state): State<AppState>) -> ApiResponse {
-    let result = sqlx::query_as!(ToDo, "SELECT * FROM todos")
+async fn get_all(
+    Extension(user_info): Extension<UserSession>,
+    state: State<AppState>,
+) -> ApiResponse {
+    let user_id = user_info.user_id;
+    let result = sqlx::query_as!(ToDo, "SELECT * FROM todos WHERE user_id= $1", user_id)
         .fetch_all(&state.db)
         .await?;
     Ok(Json(result).into_response())
 }
 
-async fn post(State(state): State<AppState>, Json(data): Json<NewToDo>) -> ApiResponse {
+async fn post(
+    Extension(user_info): Extension<UserSession>,
+    State(state): State<AppState>,
+    Json(data): Json<NewToDo>,
+) -> ApiResponse {
     let result = sqlx::query_as!(
         ToDo,
-        "INSERT INTO todos (title, description, completed) VALUES ($1, $2, $3) RETURNING *",
+        "INSERT INTO todos (title, description, completed, user_id) VALUES ($1, $2, $3, $4) RETURNING *",
         data.title,
         data.description,
         data.completed,
+        user_info.user_id
     )
     .fetch_one(&state.db)
     .await?;
@@ -93,6 +112,7 @@ async fn get(State(state): State<AppState>, Path(id): Path<i64>) -> ApiResponse 
 }
 
 async fn put(
+    Extension(user_info): Extension<UserSession>,
     State(state): State<AppState>,
     Path(id): Path<i64>,
     Json(data): Json<NewToDo>,
@@ -112,6 +132,7 @@ async fn put(
     .await?;
     let result = ToDo {
         id,
+        user_id: user_info.user_id,
         title: data.title,
         description: data.description,
         completed: data.completed,
@@ -120,6 +141,7 @@ async fn put(
 }
 
 async fn patch(
+    Extension(user_info): Extension<UserSession>,
     State(state): State<AppState>,
     Path(id): Path<i64>,
     Json(data): Json<EditToDo>,
@@ -143,6 +165,7 @@ async fn patch(
     .await?;
     let result = ToDo {
         id,
+        user_id: user_info.user_id,
         title,
         description,
         completed,

@@ -3,14 +3,16 @@ use axum::{
     http::{header::AUTHORIZATION, StatusCode},
     middleware::Next,
     response::IntoResponse,
+    routing::head,
 };
 use chrono::{NaiveDateTime, Utc};
 
 use crate::{ApiResponse, AppState};
 
+#[derive(Debug, Clone)]
 pub struct UserSession {
     id: i64,
-    user_id: i64,
+    pub user_id: i64,
     token: String,
     expires_at: NaiveDateTime,
 }
@@ -19,6 +21,7 @@ pub async fn auth(State(state): State<AppState>, request: Request, next: Next) -
     println!("Auth middleware - PRE RESPONSE");
 
     let bearer = get_auth_bearer(&request);
+
     if bearer.is_none() {
         println!("Auth middleware - NO BEARER");
         return Ok(StatusCode::UNAUTHORIZED.into_response());
@@ -29,10 +32,19 @@ pub async fn auth(State(state): State<AppState>, request: Request, next: Next) -
         println!("Auth middleware - BEARER TOKEN NOT VALID");
         return Ok(StatusCode::UNAUTHORIZED.into_response());
     }
+    if let Some(user_info) = user {
+        // Inserisci le informazioni dell'utente come estensione della richiesta
+        /* request.extensions_mut().insert(user_info); */
 
-    let response = next.run(request).await;
-    println!("Auth middleware - POST RESPONSE");
-    Ok(response)
+        // Esegui il prossimo middleware o handler
+        let response = next.run(request).await;
+
+        println!("Auth middleware - POST RESPONSE");
+        Ok(response)
+    } else {
+        println!("Auth middleware - BEARER TOKEN NOT VALID");
+        Ok(StatusCode::UNAUTHORIZED.into_response())
+    }
 }
 
 pub fn get_auth_bearer(request: &Request) -> Option<&str> {

@@ -33,6 +33,7 @@ fetchItem()
 
 async function toggleComplete(id: number, value: boolean) {
   const token = localStorage.getItem('TOKEN')
+
   await fetch(`http://localhost:6969/todos/${id}`, {
     method: 'PATCH',
     body: JSON.stringify({
