@@ -17,7 +17,7 @@ pub struct UserSession {
     expires_at: NaiveDateTime,
 }
 
-pub async fn auth(State(state): State<AppState>, request: Request, next: Next) -> ApiResponse {
+pub async fn auth(State(state): State<AppState>, mut request: Request, next: Next) -> ApiResponse {
     println!("Auth middleware - PRE RESPONSE");
 
     let bearer = get_auth_bearer(&request);
@@ -34,7 +34,7 @@ pub async fn auth(State(state): State<AppState>, request: Request, next: Next) -
     }
     if let Some(user_info) = user {
         // Inserisci le informazioni dell'utente come estensione della richiesta
-        /* request.extensions_mut().insert(user_info); */
+        request.extensions_mut().insert(user_info);
 
         // Esegui il prossimo middleware o handler
         let response = next.run(request).await;

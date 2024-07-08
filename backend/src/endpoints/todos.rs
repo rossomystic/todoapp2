@@ -1,8 +1,8 @@
 use axum::{
-    extract::{Json, Path, State},
+    extract::{Extension, Json, Path, State},
     http::StatusCode,
     response::IntoResponse,
-    routing, Extension, Router,
+    routing, Router,
 };
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
@@ -93,11 +93,11 @@ async fn post(
 ) -> ApiResponse {
     let result = sqlx::query_as!(
         ToDo,
-        "INSERT INTO todos (title, description, completed, user_id) VALUES ($1, $2, $3, $4) RETURNING *",
+        "INSERT INTO todos (user_id, title, description, completed) VALUES ($1, $2, $3, $4) RETURNING *",
+        user_info.user_id,
         data.title,
         data.description,
-        data.completed,
-        user_info.user_id
+        data.completed
     )
     .fetch_one(&state.db)
     .await?;
